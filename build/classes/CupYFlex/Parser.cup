@@ -1,0 +1,188 @@
+
+package CupYFlex;
+
+import java.util.LinkedList;
+import java_cup.runtime.*;
+import CupYFlex.ErrorS;
+import java.util.ArrayList;
+
+parser code 
+
+{:
+    public void syntax_error(Symbol s){
+        String lexema = s.value.toString();
+        int fila =  s.right;
+        int columna = s.left;
+        String red="\033[31m"; 
+        System.out.println(red + "ERROR SINTACTICO RECUPERADO!! \t\tLexema: " + lexema+ "\t\tFila " + fila +"\t\tColumna: " +columna+"simbolo"  );
+        ErrorS error = new ErrorS(lexema, fila, columna , "error Sintactico");
+        ErrorS.tablaErroresSintacticos.add(error);
+    }
+
+    public void unrrecovered_syntax_error(Symbol s) throws java.lang.Exception {
+        String lexema = s.value.toString();
+        int fila = s.right;
+        int columna = s.left;
+        String red="\033[31m"; 
+        System.out.println(red + "ERROR SINTACTICO SIN RECUPERACION!! \t\tLexema: " + lexema+ "\t\tFila " + fila +"\t\tColumna: " +columna );
+        ErrorS error = new ErrorS(lexema, fila, columna , "error Sintactico");
+        ErrorS.tablaErroresSintacticos.add(error);
+    }
+:}
+
+//---------->
+action code {:
+:}
+
+
+terminal        EXTIENDE, PISTA,BOOLF, BOOLT,
+                SIMMAS, ASTERISCO, MENOS, DIV, POT,COMA,
+                PARABRE, PARCIERRA, CORCHETEIZ, CORCHETEDER,
+                ENTERO, DECIMAL, CHAR, CADENA, IDENTIFICADOR
+                
+                ;
+
+non terminal    S,F,pista, extiende , cuerpoPista;
+
+precedence left UMINUS
+precedence left ELSE
+precedence left S_OR
+precedence left S_AND
+precedence left IGUAL,  NIIGUAL
+precedenceleft  MAYORIGUAL ,  MENORIGUAL ,  MAYOR ,  MENOR 
+precedence left MAS , MENOS
+precedence left S_MULTIPLY, S_DIVISION, S_MODULE
+precedence left S_POTENCY
+precedence right S_NOT
+
+
+start with S;
+
+S::=    S F 
+        |F
+;
+
+F::=    IDENTIFICADOR     {:System.out.println( "IDENTIFICADOR");:}
+        | DECIMAL   {:System.out.println( "DECIMAL");:}
+        | CHAR      {:System.out.println( "CHAR");:}
+        | CADENA    {:System.out.println( "CADENA");:}
+        | ENTERO      {:System.out.println( "ENTERO");:}
+        |ASTERISCO  {:System.out.println( "ASTERISCO");:}
+        ;
+
+inicio::=   inicio cuerpoInicio
+            |cuerpoInicio
+;
+
+cuerpoInicio::= KEEP pista
+                |pista
+                |error pista
+;
+
+pista::=    PISTA IDENTIFICADOR EXTIENDE extiende cuerpoPista
+            |PISTA IDENTIFICADOR cuerpoPista
+            
+;
+
+cuerpoPista::=  cuerpoPista cuerpPistaP
+                |cuerpPistaP
+;
+
+cuerpPistaP::=  declararVar
+                |
+;
+
+extiende::= extiende COMA IDENTIFICADOR
+            |IDENTIFICADOR
+;
+
+asignaDeclaraVar::= declararVar extiende
+;
+
+definicionVar ::=    asignaDeclaraVar IGUAL  listaExpresion
+                    |asignaDeclaraVar
+ ;
+
+tipoDefinicionVar::=    expresion
+                        |reproducir
+;
+
+
+reproducir::=    REPRODUCIR PARABRE IDENTIFICADOR COMA expresion COMA expresion COMA expresion PARCIERRA
+
+declaraVar::=   VAR  tipos
+                |KEEP VAR tipos
+;
+
+expresion :  MENOS expresion %prec UMINUS   
+            | NOT expresion  { $$ = APIinstructions.newUnaryOP($2, OPERATION_TYPE.NOT); }
+            | expresion MAS expresion  { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.ADDITION) }
+            | expresion MENOS expresion { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.SUBTRACTION) }
+            | expresion MULTIPLICACION expresion  { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.MULTIPLICATION) }
+            | expresion DIVISION expresion  { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.DIVISION) }
+            | expresion POTENCIA expresion   { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.POTENCY) }
+            | expresion MAYOR expresion { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.MAJOR_THAN) }
+            | expresion MENOR expresion { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.LESS_THAN) }
+            | expresion MAYORIGUAL expresion   { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.MAJOR_EQUALS_THAN) }
+            | expresion MENORIGUAL expresion   { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.LESS_EQUALS_THAN) }
+            | expresion IGUALIGUAL expresion  { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.EQUALS_EQUALS) }
+            | expresion NOIGUAL expresion { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.DIFFERENT) }
+            | expresion OR expresion    { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.OR) }
+            | expresion AND expresion   { $$ = APIinstructions.newBinaryOP($1, $3, OPERATION_TYPE.AND) }
+            | PARABRE expresion PARCIERRA { $$ = $2; }
+            | IDENTIFICADOR PARABRE expresion PARCIERRA  { $$ = APIinstructions.newCallFun($1, $3); }
+            | IDENTIFICADOR PARABRE PARCIERRA { $$ = APIinstructions.newCallFun($1, undefined); }
+            | IDENTIFICADOR    { $$ = APIinstructions.newValue($1, TYPES.ID); }
+            | DECIMAL { $$ = APIinstructions.newValue($1, TYPES.DOUBLE); }
+            | ENTERO    { $$ = APIinstructions.newValue($1, TYPES.INTEGER); }            
+            | CADENA    { $$ = APIinstructions.newValue($1, TYPES.STRING); }
+            | CHAR  { $$ = APIinstructions.newValue($1, TYPES.CHAR); }
+            | BOOLF  { $$ = APIinstructions.newValue($1, TYPES.BOOLEAN); }
+            | BOOLT { $$ = APIinstructions.newValue($1, TYPES.BOOLEAN); }
+            ;
+
+listaExpresion::=   listaExpresion expresion
+                    |expresion
+;
+
+/*  INSTRUCCIONES CONDICIONALES */
+
+sentenciaIfElse ::=  if PARABRE expresion PARCIERRA  listaSentencias  { $$ = APIinstructions.newIf($3, $6, undefined, undefined); }
+                | if PARABRE expresion PARCIERRA  listaSentencias  ELSE  listaSentencias   { $$ = APIinstructions.newIf($3, $6, undefined, APIinstructions.newElse($10)); }
+                | if PARABRE expresion PARCIERRA  listaSentencias  ELSE sentenciaIfElse { $$ = APIinstructions.newIf($3, $6, APIinstructions.newElseIf($9), undefined); }
+            ;
+
+listaSentencias :   definicionVar listaSentencias     { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | IFELSESENTENCE listaSentencias  { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | SWITCHSENTENCE listaSentencias  { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | FORSENTENCE listaSentencias { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | WHILESENTENCE listaSentencias   { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | DOWHILESENTENCE listaSentencias { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | CONTINUESENTENCE listaSentencias    { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | BREAKSENTENCE listaSentencias   { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | RETURNSENTENCE listaSentencias  { $$ = APIinstructions.newSententenceList($2, $1); }
+                    | { $$ = undefined; }
+                    | sentenciaError listaSentencias  {
+                        ARRAYMANAGEMENT.pushAr( SyntacticalErrors,
+                            {
+                                ERROR: "Se esperaba sentencia, se encontro '" + $1 + "'",
+                                LINE: this._$.first_line,
+                                COLUMN: this._$.first_column
+                            }
+                        )
+                    }
+                    ;
+
+sentenciaError :   sentenciaError FINALERROR  { $$ = $1 + " " + $2; }
+                | FINALERROR    { $$ = $1; }
+            ;
+
+FINALERROR ::= error ;
+
+tipos::=    SENTERO  
+            |SDOBLE
+            |SBOOLEAN
+            |SCARACTER
+            |SCADENA
+;
+
