@@ -1,1 +1,0 @@
-class Piano(val teclas: Array<Key>)
