@@ -19,7 +19,7 @@ public class CreadorReproductorMusica {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        /*String entrada = "g33r f * 's' \"dd\"";
+        /*String entrada = "pista jo \n  \tvar cadena unn=\"d#nd\" \n\tvar entero unn\n ";
             AnalizadorLexico lexico = new AnalizadorLexico(new StringReader(entrada));
             parser parser1 = new parser(lexico);
         try {
@@ -30,5 +30,14 @@ public class CreadorReproductorMusica {
         } */
         Principal principal = new Principal();
         principal.setVisible(true);
+        /*Object obj = 3.3;
+        Class c = obj.getClass();
+        System.out.println("Clase del Objeto obj es : "
+                + c.getName());
+        if(c.getName().contains("Boolean")){
+            System.out.println("siii");
+        }else{
+            System.out.println("nooo");
+        }*/
     }
 }

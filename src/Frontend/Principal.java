@@ -5,9 +5,18 @@
  */
 package Frontend;
 
+import Backend.Compilador.Entorno;
 import Backend.Compilador.ManejadorArchivo;
+import Backend.Compilador.Simbolo;
+import Backend.Instrucciones.Declaracion;
+import Backend.Instrucciones.Funcion;
+import Backend.Instrucciones.Metodo;
+import Backend.Instrucciones.PistaInst;
+import Backend.Interfaces.Instruccion;
 import Backend.LectorArchivo;
+import Backend.Reproductor.Pista;
 import CupYFlex.AnalizadorLexico;
+import CupYFlex.ErrorS;
 import CupYFlex.parser;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,6 +34,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import jdk.nashorn.internal.objects.NativeArray;
 
 /**
  *
@@ -77,6 +87,7 @@ public class Principal extends javax.swing.JFrame {
         btnRep = new javax.swing.JMenu();
         btnAnalizar = new javax.swing.JMenuItem();
         limpiarConsola = new javax.swing.JMenuItem();
+        btnErrores = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -332,6 +343,16 @@ public class Principal extends javax.swing.JFrame {
         });
         btnRep.add(limpiarConsola);
 
+        btnErrores.setBackground(new java.awt.Color(185, 240, 234));
+        btnErrores.setFont(new java.awt.Font("Century Schoolbook L", 1, 18)); // NOI18N
+        btnErrores.setText("Ver Errores");
+        btnErrores.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnErroresActionPerformed(evt);
+            }
+        });
+        btnRep.add(btnErrores);
+
         menuBarra.add(btnRep);
 
         setJMenuBar(menuBarra);
@@ -363,6 +384,7 @@ public class Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_btnDetenerActionPerformed
 
     private void btnNuevoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoActionPerformed
+         ErrorS.tablaErroresSintacticos.clear();
         NombrarDialog nombrar = new NombrarDialog(this);
         nombrar.setVisible(true);
 
@@ -373,7 +395,7 @@ public class Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_btnNuevoActionPerformed
 
     private void btnAbrirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAbrirActionPerformed
-
+        ErrorS.tablaErroresSintacticos.clear();
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         System.out.println("entrandi archivo");
@@ -433,11 +455,14 @@ public class Principal extends javax.swing.JFrame {
     }//GEN-LAST:event_btnGuardarComoActionPerformed
 
     private void btnSalirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSalirActionPerformed
+         ErrorS.tablaErroresSintacticos.clear();
         this.dispose();
     }//GEN-LAST:event_btnSalirActionPerformed
 
     private void btnAnalizarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAnalizarActionPerformed
-         int indice = panelArchivos.getSelectedIndex();
+         ErrorS.tablaErroresSintacticos.clear();
+        consola.setText("");
+        int indice = panelArchivos.getSelectedIndex();
         AnalizadorLexico lex = new AnalizadorLexico(new BufferedReader( new StringReader(documentos.get(indice).ObtenerTexto())));
         lex.pintar.darEstilo(documentos.get(indice).ObtenerTexto());
         documentos.get(indice).AreaTexto.setDocument(lex.pintar.caja2.getDocument());
@@ -445,7 +470,25 @@ public class Principal extends javax.swing.JFrame {
         System.out.println(documentos.get(indice).ObtenerTexto());
         try {                                 
                 //aca se compila                   
-                sint.parse();
+                 sint.parse();
+                PistaInst pist =sint.getInstruccion();
+                Entorno global = new Entorno(null);
+                Pista pista= new Pista(pist.getNombre());
+                ArrayList<Instruccion> ins = pist.getInstrucciones();
+                for (Instruccion in : ins) {
+                    Entorno entornoObjeto = new Entorno(null);
+                    if(in.tipoIns()=="funcion"){
+                        Funcion fun = (Funcion)in;
+                        Simbolo sim = new Simbolo( fun.getIdentificador(), fun.getTipo());
+                    }else if(in.tipoIns()=="metodo"){
+                        Metodo fun = (Metodo)in;
+                        Simbolo sim = new Simbolo( fun.getIdentificador(), fun.getTipo());
+                    }else{
+                        Declaracion fun = (Declaracion)in;
+                        Simbolo sim = new Simbolo( fun.getIds(), fun.getTipo());
+                    }
+                    
+                }
                 consola.setText(consola.getText()+"\nAVISO: Analisis realizado correctamente.");
                 jTabbedPane1.setSelectedIndex(1);
             } catch (Exception ex) {
@@ -457,6 +500,11 @@ public class Principal extends javax.swing.JFrame {
     private void limpiarConsolaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_limpiarConsolaActionPerformed
         consola.setText("");
     }//GEN-LAST:event_limpiarConsolaActionPerformed
+
+    private void btnErroresActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnErroresActionPerformed
+        Errores tablaErrores = new Errores(this,true, ErrorS.tablaErroresSintacticos);
+        tablaErrores.setVisible(true);
+    }//GEN-LAST:event_btnErroresActionPerformed
     JLabel imagen = new JLabel();
 
     void diseño() {
@@ -537,6 +585,7 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JMenuItem btnAbrir;
     private javax.swing.JMenuItem btnAnalizar;
     private javax.swing.JButton btnDetener;
+    private javax.swing.JMenuItem btnErrores;
     private javax.swing.JMenuItem btnGuardar;
     private javax.swing.JMenuItem btnGuardarComo;
     private javax.swing.JMenuItem btnNuevo;
@@ -544,7 +593,7 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JButton btnPlay;
     private javax.swing.JMenu btnRep;
     private javax.swing.JMenuItem btnSalir;
-    private javax.swing.JTextArea consola;
+    public static javax.swing.JTextArea consola;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JMenu jMenu3;

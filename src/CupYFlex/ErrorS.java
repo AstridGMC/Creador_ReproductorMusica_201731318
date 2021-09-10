@@ -19,11 +19,11 @@ public class ErrorS {
     private String tipo;
     static public ArrayList<ErrorS> tablaErroresSintacticos=new ArrayList();
 
-    public ErrorS(String Lexema,int fila,int columna, String mensaje) {
+    public ErrorS(String Lexema,int fila,int columna, String tipo) {
         this.Lexema = Lexema;
         this.columna = columna;
         this.fila = fila;
-        this.tipo = mensaje;
+        this.tipo = tipo;
     }
 
     public String getLexema() {
@@ -58,6 +58,5 @@ public class ErrorS {
         this.tipo = mensaje;
         
     }
-    
     
 }

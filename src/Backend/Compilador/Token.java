@@ -13,7 +13,5 @@ import java.awt.Color;
  */
 public class Token {
     Color color;
-    enum Tipo {PalabraReservada, ID, CadenaCracter,Numero, Comentario, Otro}
-    
-    
+   
 }
